@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { Link, Outlet, useNavigate } from 'react-router-dom';
 import {
   Brain,
   Shield,
@@ -15,30 +15,19 @@ import {
   Instagram,
   Facebook,
   MessageCircle,
-  Store
+  Store,
+  Menu
 } from "lucide-react";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Auth } from "./components/Auth";
 import { Pricing } from "./components/Pricing";
 import { Dashboard } from './components/Dashboard';
 import { useAuth } from "./hooks/useAuth";
-import AboutUs from './pages/AboutUs';
-import PrivacyPolicy from './pages/PrivacyPolicy';
-import Terms from './pages/Terms';
-import CookiePolicy from './pages/CookiePolicy';
-import SecurityPolicy from './pages/SecurityPolicy';
 import { ROUTES, SOCIAL_LINKS } from './config/constants';
 import { ModalPage } from './components/ui/Modal';
 
-const PageWrapper = ({ children }: { children: React.ReactNode }) => {
-  const location = useLocation();
-  const isModalRoute = [ROUTES.about, ROUTES.privacy, ROUTES.terms, ROUTES.cookies, ROUTES.security].includes(location.pathname);
-
-  if (isModalRoute) {
-    return <ModalPage>{children}</ModalPage>;
-  }
-
-  return <>{children}</>;
-};
+// Create a client
+const queryClient = new QueryClient();
 
 function App() {
   const [isVisible, setIsVisible] = useState(false);
@@ -48,6 +37,7 @@ function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
   const { currentUser } = useAuth();
+  const navigate = useNavigate();
 
   const services = [
     {
@@ -166,7 +156,7 @@ function App() {
           "Revenue optimization"
         ]
       },
-      link: "/affiliates"
+      onClick: () => navigate('/business-operations')
     }
   ];
 
@@ -185,7 +175,7 @@ function App() {
   }
 
   return (
-    <Router>
+    <QueryClientProvider client={queryClient}>
       <div className="min-h-screen bg-white dark:bg-black text-gray-900 dark:text-white transition-colors duration-300">
         {/* WhatsApp Bubble */}
         <a
@@ -206,7 +196,7 @@ function App() {
           />
           <div className="absolute inset-0 bg-gradient-to-r from-[#00ff00]/5 to-[#003300]/10 dark:from-[#00ff00]/10 dark:to-[#003300]/20" />
 
-          <nav className="relative z-10 container mx-auto px-6 py-4 bg-white/5 dark:bg-black/5 backdrop-blur-md border-b border-[#00ff00]/20">
+          <nav className="relative z-50 container mx-auto px-6 py-4 bg-white/5 dark:bg-black/5 backdrop-blur-md border-b border-[#00ff00]/20">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <img
@@ -221,82 +211,80 @@ function App() {
               <button 
                 className="md:hidden p-2"
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
+                aria-label="Toggle menu"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
-                </svg>
+                {isMenuOpen ? (
+                  <X className="w-6 h-6" />
+                ) : (
+                  <Menu className="w-6 h-6" />
+                )}
               </button>
               <div 
-                className={`${isMenuOpen ? 'translate-x-0 opacity-100' : '-translate-x-full md:translate-x-0 opacity-0 md:opacity-100'} 
-                md:flex flex-col md:flex-row fixed md:relative inset-y-0 left-0 right-1/4 md:right-auto md:top-auto 
-                bg-white/95 md:bg-transparent backdrop-blur-lg md:backdrop-blur-none md:space-x-8 
-                items-center py-4 md:py-0 space-y-4 md:space-y-0 shadow-2xl md:shadow-none 
-                transition-all duration-300 ease-in-out z-50 md:z-auto`}
+                className={`${
+                  isMenuOpen 
+                    ? 'absolute top-full left-0 right-0 bg-white dark:bg-black border-b border-[#00ff00]/20' 
+                    : 'hidden'
+                } md:relative md:flex md:items-center md:space-x-8 md:bg-transparent md:border-none`}
               >
-                <a
-                  href="#services"
-                  className="hover:text-[#00ff00] transition-colors"
-                >
-                  Services
-                </a>
-                <a
-                  href="#pricing"
-                  className="hover:text-[#00ff00] transition-colors"
-                >
-                  Pricing
-                </a>
-                <a
-                  href="#vision"
-                  className="hover:text-[#00ff00] transition-colors"
-                >
-                  Vision
-                </a>
-                <button
-                  onClick={() => setIsDarkMode(!isDarkMode)}
-                  className="p-2 rounded-full hover:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
-                  aria-label="Toggle dark mode"
-                >
-                  {isDarkMode ? (
-                    <Sun className="w-5 h-5 text-[#00ff00]" />
+                <div className={`flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-8 p-4 md:p-0`}>
+                  <a
+                    href="#services"
+                    className="hover:text-[#00ff00] transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Services
+                  </a>
+                  <a
+                    href="#pricing"
+                    className="hover:text-[#00ff00] transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Pricing
+                  </a>
+                  <a
+                    href="#vision"
+                    className="hover:text-[#00ff00] transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Vision
+                  </a>
+                  <button
+                    onClick={() => {
+                      setIsDarkMode(!isDarkMode);
+                      setIsMenuOpen(false);
+                    }}
+                    className="p-2 rounded-full hover:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
+                    aria-label="Toggle dark mode"
+                  >
+                    {isDarkMode ? (
+                      <Sun className="w-5 h-5 text-[#00ff00]" />
+                    ) : (
+                      <Moon className="w-5 h-5 text-[#00ff00]" />
+                    )}
+                  </button>
+                  {currentUser ? (
+                    <div className="relative">
+                      <button
+                        onClick={() => setShowDashboard(true)}
+                        className="inline-flex items-center space-x-2 bg-[#00ff00] text-black px-4 py-2 rounded-full hover:bg-[#00cc00] transition-colors"
+                      >
+                        <span>Dashboard</span>
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
                   ) : (
-                    <Moon className="w-5 h-5 text-[#00ff00]" />
-                  )}
-                </button>
-                {currentUser ? (
-                  <div className="relative">
                     <button
-                      onClick={() => setIsMenuOpen(!isMenuOpen)}
+                      onClick={() => {
+                        setIsModalOpen(true);
+                        setIsMenuOpen(false);
+                      }}
                       className="inline-flex items-center space-x-2 bg-[#00ff00] text-black px-4 py-2 rounded-full hover:bg-[#00cc00] transition-colors"
                     >
-                      <span>Menu</span>
+                      <span>Sign In</span>
                       <ChevronRight className="w-4 h-4" />
                     </button>
-                    {isMenuOpen && (
-                      <div className="absolute right-0 mt-2 w-48 bg-white/10 dark:bg-black/10 backdrop-blur-md border border-[#00ff00]/20 rounded-lg shadow-lg py-2">
-                        <a
-                          href="#"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setShowDashboard(true);
-                          }}
-                          className="block px-4 py-2 hover:bg-[#00ff00]/10 transition-colors"
-                        >
-                          Dashboard
-                        </a>
-                        <a href="#" className="block px-4 py-2 hover:bg-[#00ff00]/10 transition-colors">Book a Demo</a>
-                        <a href="#" className="block px-4 py-2 hover:bg-[#00ff00]/10 transition-colors">API Access</a>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setIsModalOpen(true)}
-                    className="inline-flex items-center space-x-2 bg-[#00ff00] text-black px-4 py-2 rounded-full hover:bg-[#00cc00] transition-colors"
-                  >
-                    <span>Sign In</span>
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           </nav>
@@ -337,10 +325,11 @@ function App() {
               {services.map((service, index) => (
                 <div
                   key={index}
-                  className="group relative bg-white/10 dark:bg-black/10 backdrop-blur-md p-6 md:p-8 rounded-xl hover:shadow-2xl hover:shadow-[#00ff00]/20 transition-all duration-300 border border-[#00ff00]/20 animate-fade-in"
+                  className="group relative bg-white/10 dark:bg-black/10 backdrop-blur-md p-6 md:p-8 rounded-xl hover:shadow-2xl hover:shadow-[#00ff00]/20 transition-all duration-300 border border-[#00ff00]/20 animate-fade-in cursor-pointer"
                   style={{
                     animationDelay: `${index * 150}ms`,
                   }}
+                  onClick={service.onClick || (() => setActiveService(index))}
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-[#00ff00]/5 to-transparent opacity-0 group-hover:opacity-100 rounded-xl transition-opacity" />
                   <div className="relative">
@@ -349,13 +338,10 @@ function App() {
                       {service.title}
                     </h3>
                     <p className="text-gray-400">{service.description}</p>
-                    <button
-                      onClick={() => setActiveService(index)}
-                      className="mt-6 flex items-center text-[#00ff00] group-hover:text-[#00cc00]"
-                    >
+                    <div className="mt-6 flex items-center text-[#00ff00] group-hover:text-[#00cc00]">
                       <span>Learn More</span>
                       <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                    </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -466,7 +452,7 @@ function App() {
 
         {/* Modal */}
         {isModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
             <div className="bg-white dark:bg-black dark:text-white text-black p-8 rounded-lg max-w-md w-full">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold">Join The Revolution</h2>
@@ -622,40 +608,10 @@ function App() {
           </div>
         </footer>
 
-        <Routes>
-          <Route path={ROUTES.home} element={
-            <div>
-              {/* Main content components */}
-            </div>
-          } />
-          <Route path={ROUTES.about} element={
-            <PageWrapper>
-              <AboutUs />
-            </PageWrapper>
-          } />
-          <Route path={ROUTES.privacy} element={
-            <PageWrapper>
-              <PrivacyPolicy />
-            </PageWrapper>
-          } />
-          <Route path={ROUTES.terms} element={
-            <PageWrapper>
-              <Terms />
-            </PageWrapper>
-          } />
-          <Route path={ROUTES.cookies} element={
-            <PageWrapper>
-              <CookiePolicy />
-            </PageWrapper>
-          } />
-          <Route path={ROUTES.security} element={
-            <PageWrapper>
-              <SecurityPolicy />
-            </PageWrapper>
-          } />
-        </Routes>
+        {/* Outlet for nested routes */}
+        <Outlet />
       </div>
-    </Router>
+    </QueryClientProvider>
   );
 }
 
